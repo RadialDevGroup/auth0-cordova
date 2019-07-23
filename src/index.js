@@ -41,6 +41,84 @@ function CordovaAuth(options) {
   });
 }
 
+
+/**
+ * @callback logoutCallback
+ * @param {Error} [err] error returned by Auth0 with the reason of the Auth failure
+ */
+
+/**
+ * Opens the OS browser and redirects to `{domain}/authorize` url in order to initialize a new authN/authZ transaction
+ *
+ * @method logout
+ * @param {logoutCallback} callback
+ * @see {@link https://auth0.com/docs/api/authentication#authorize-client}
+ * @see {@link https://auth0.com/docs/api/authentication#social}
+ */
+
+CordovaAuth.prototype.logout = function (callback) {
+  const url = 'https://' + this.domain + '/v2/logout?client_id=' + this.clientId + '&returnTo=' + this.redirectUri;
+  const redirectUri = this.redirectUri;
+
+  getAgent(function(err, agent) {
+    if (err) {
+      return callback(err);
+    }
+
+    console.log('logging out:', url);
+
+    session.start((sessionError, redirectUrl) => {
+      if (sessionError != null) {
+        callback(sessionError);
+        return true;
+      }
+
+      if (redirectUrl.indexOf(redirectUri) === -1) {
+        return false;
+      }
+
+      if (!redirectUrl || typeof redirectUrl !== 'string') {
+        callback(new Error('url must be a string'));
+        return true;
+      }
+
+      agent.close();
+      callback();
+
+      return true;
+    });
+
+    agent.open(url, function (error, result) {
+      if (error != null) {
+        session.clean();
+        return callback(error);
+      }
+
+      if (result.event === 'closed') {
+        var handleClose = function () {
+          if (session.isClosing) {
+            session.clean();
+            return callback(new Error('user canceled'));
+          }
+        };
+
+        session.closing();
+        if (getOS() === 'ios') {
+          handleClose();
+        } else {
+          setTimeout(handleClose, closingDelayMs);
+          return;
+        }
+      }
+
+      if (result.event !== 'loaded') {
+        // Ignore any other events.
+        return;
+      }
+    });
+  });
+}
+
 /**
  * @callback authorizeCallback
  * @param {Error} [err] error returned by Auth0 with the reason of the Auth failure
@@ -83,6 +161,8 @@ CordovaAuth.prototype.authorize = function (parameters, callback) {
 
     parameters.state = requestState;
 
+    console.log('Authorization State:', parameters.state);
+
     var params = Object.assign({}, parameters, {
       code_challenge_method: 'S256',
       responseType: 'code',
@@ -91,6 +171,65 @@ CordovaAuth.prototype.authorize = function (parameters, callback) {
     });
 
     var url = client.buildAuthorizeUrl(params);
+
+    session.start((sessionError, redirectUrl) => {
+      console.log('evaluating sessionError', sessionError, redirectUrl);
+
+      if (sessionError != null) {
+        callback(sessionError);
+        return true;
+      }
+
+      console.log('matching intent uri');
+
+      if (redirectUrl.indexOf(redirectUri) === -1) {
+        return false;
+      }
+
+      console.log('typechecking redirectURI');
+
+      if (!redirectUrl || typeof redirectUrl !== 'string') {
+        callback(new Error('url must be a string'));
+        return true;
+      }
+
+      console.log('Parsing Response');
+
+      var response = parse(redirectUrl, true).query;
+      if (response.error) {
+        callback(new Error(response.error_description || response.error));
+        return true;
+      }
+
+      console.log('VERIFYING CSRF');
+
+      // // CSRF Protection
+      // var responseState = response.state;
+      // if (responseState !== requestState) {
+      //   callback(new Error('Response state does not match expected state'));
+      //   return true;
+      // }
+
+      var code = response.code;
+      var verifier = keys.codeVerifier;
+      agent.close();
+
+      console.log('GETTING TOKEN');
+
+      client.oauthToken({
+        code_verifier: verifier,
+        grantType: 'authorization_code',
+        redirectUri: redirectUri,
+        code: code
+      }, function (exchangeError, exchangeResult) {
+        if (exchangeError) {
+          return callback(exchangeError);
+        }
+        return callback(null, exchangeResult);
+      });
+
+      return true;
+    });
 
     agent.open(url, function (error, result) {
       if (error != null) {
@@ -119,52 +258,6 @@ CordovaAuth.prototype.authorize = function (parameters, callback) {
         // Ignore any other events.
         return;
       }
-
-      session.start(function (sessionError, redirectUrl) {
-        if (sessionError != null) {
-          callback(sessionError);
-          return true;
-        }
-
-        if (redirectUrl.indexOf(redirectUri) === -1) {
-          return false;
-        }
-
-        if (!redirectUrl || typeof redirectUrl !== 'string') {
-          callback(new Error('url must be a string'));
-          return true;
-        }
-
-        var response = parse(redirectUrl, true).query;
-        if (response.error) {
-          callback(new Error(response.error_description || response.error));
-          return true;
-        }
-
-        var responseState = response.state;
-        if (responseState !== requestState) {
-          callback(new Error('Response state does not match expected state'));
-          return true;
-        }
-
-        var code = response.code;
-        var verifier = keys.codeVerifier;
-        agent.close();
-
-        client.oauthToken({
-          code_verifier: verifier,
-          grantType: 'authorization_code',
-          redirectUri: redirectUri,
-          code: code
-        }, function (exchangeError, exchangeResult) {
-          if (exchangeError) {
-            return callback(exchangeError);
-          }
-          return callback(null, exchangeResult);
-        });
-
-        return true;
-      });
     });
   });
 };

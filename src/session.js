@@ -1,6 +1,7 @@
 function Session() {}
 
 Session.clean = function () {
+  console.log('NOW');
   Session.current = function () { return false; };
   Session.isClosing = false;
 };
@@ -9,12 +10,14 @@ Session.closing = function () {
   Session.isClosing = true;
 };
 
-Session.start = function (handler) {
+Session.start = function (current) {
+  console.log("Ready. Begin");
   Session.current(new Error('Only one instance of auth can happen at a time'));
-  Session.current = handler;
+  Session.current = current;
 };
 
 Session.onRedirectUri = function (url) {
+  console.log('handling UrI', url, Session.current);
   if (Session.current(null, url)) {
     Session.clean();
   }
