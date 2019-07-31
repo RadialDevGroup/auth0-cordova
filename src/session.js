@@ -17,7 +17,7 @@ Session.start = function (current) {
 };
 
 Session.onRedirectUri = function (url) {
-  console.log('handling UrI', url, Session.current);
+  console.log('handling Uri', url);
   if (Session.current(null, url)) {
     Session.clean();
   }

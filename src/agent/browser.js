@@ -5,13 +5,19 @@ function Browser() {
 }
 
 Browser.isAvailable = function (callback) {
-  window.SafariViewController.isAvailable(callback);
+  var waitForSafariViewController = function() {
+    if (window.SafariViewController) {
+      window.SafariViewController.isAvailable(callback);
+    } else {
+      setTimeout(waitForSafariViewController, 100);
+    }
+  }
+  waitForSafariViewController();
 };
 
 
 Browser.prototype.open = function (url, callback) {
   var options = {
-    hidden: false,
     url: url
   };
 

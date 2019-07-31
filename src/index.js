@@ -83,7 +83,7 @@ CordovaAuth.prototype.logout = function (callback) {
       }
 
       agent.close();
-      callback();
+      setTimeout(callback, 1000);
 
       return true;
     });
