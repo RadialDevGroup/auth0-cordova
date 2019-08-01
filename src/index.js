@@ -65,8 +65,6 @@ CordovaAuth.prototype.logout = function (callback) {
       return callback(err);
     }
 
-    console.log('logging out:', url);
-
     session.start((sessionError, redirectUrl) => {
       if (sessionError != null) {
         callback(sessionError);
@@ -161,8 +159,6 @@ CordovaAuth.prototype.authorize = function (parameters, callback) {
 
     parameters.state = requestState;
 
-    console.log('Authorization State:', parameters.state);
-
     var params = Object.assign({}, parameters, {
       code_challenge_method: 'S256',
       responseType: 'code',
@@ -173,35 +169,25 @@ CordovaAuth.prototype.authorize = function (parameters, callback) {
     var url = client.buildAuthorizeUrl(params);
 
     session.start((sessionError, redirectUrl) => {
-      console.log('evaluating sessionError', sessionError, redirectUrl);
-
       if (sessionError != null) {
         callback(sessionError);
         return true;
       }
 
-      console.log('matching intent uri');
-
       if (redirectUrl.indexOf(redirectUri) === -1) {
         return false;
       }
-
-      console.log('typechecking redirectURI');
 
       if (!redirectUrl || typeof redirectUrl !== 'string') {
         callback(new Error('url must be a string'));
         return true;
       }
 
-      console.log('Parsing Response');
-
       var response = parse(redirectUrl, true).query;
       if (response.error) {
         callback(new Error(response.error_description || response.error));
         return true;
       }
-
-      console.log('VERIFYING CSRF');
 
       // // CSRF Protection
       // var responseState = response.state;
@@ -213,8 +199,6 @@ CordovaAuth.prototype.authorize = function (parameters, callback) {
       var code = response.code;
       var verifier = keys.codeVerifier;
       agent.close();
-
-      console.log('GETTING TOKEN');
 
       client.oauthToken({
         code_verifier: verifier,
