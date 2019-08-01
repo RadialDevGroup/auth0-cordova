@@ -47,6 +47,8 @@ function CordovaAuth(options) {
  * @param {Error} [err] error returned by Auth0 with the reason of the Auth failure
  */
 
+ var SECONDS = 1000; //miliseconds
+
 /**
  * Opens the OS browser and redirects to `{domain}/authorize` url in order to initialize a new authN/authZ transaction
  *
@@ -59,6 +61,7 @@ function CordovaAuth(options) {
 CordovaAuth.prototype.logout = function (callback) {
   const url = 'https://' + this.domain + '/v2/logout?client_id=' + this.clientId + '&returnTo=' + this.redirectUri;
   const redirectUri = this.redirectUri;
+  var self = this;
 
   getAgent(function(err, agent) {
     if (err) {
@@ -82,8 +85,10 @@ CordovaAuth.prototype.logout = function (callback) {
         return true;
       }
 
+      // self.authorize({}, callback);
       agent.close();
-      setTimeout(callback, 1000);
+
+      setTimeout(callback, 1 * SECONDS);
 
       return true;
     });

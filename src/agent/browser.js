@@ -28,8 +28,16 @@ Browser.prototype.open = function (url, callback) {
   });
 };
 
-Browser.prototype.close = function () {
-  this.browser.hide();
+Browser.prototype.close = function (callback) {
+  if(! callback instanceof Function) {
+    callback = function() {}
+  }
+
+  this.browser.hide(function (result) {
+    callback(null, result);
+  }, function (message) {
+    callback(new Error(message));
+  });
 };
 
 module.exports = Browser;

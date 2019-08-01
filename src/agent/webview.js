@@ -44,10 +44,21 @@ WebView.prototype.clearEvents = function () {
   this.tab.removeEventListener('exit', this.handleExit);
 };
 
-WebView.prototype.close = function () {
+WebView.prototype.close = function (callback) {
   if (this.tab != null) {
     this.tab.close();
   }
+
+  if(callback instanceof Function) {
+    var tab = this.tab;
+
+    tab.addEventListener('exit', function self() {
+      tab.removeEventListener('exit', self);
+
+      callback(null, { success: 'yes' });
+    });
+  }
+
   this.clearEvents();
   this.tab = null;
   this.handler = null;
