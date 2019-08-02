@@ -17,9 +17,17 @@ Browser.isAvailable = function (callback) {
 
 
 Browser.prototype.open = function (url, callback) {
-  var options = {
+  var userOptions;
+
+  if (url instanceof Object) {
+    userOptions = url;
+    url = userOptions.url;
+    if (!url) throw new Error("url is a required option");
+  }
+
+  var options = Object.assign({}, userOptions, {
     url: url
-  };
+  });
 
   this.browser.show(options, function (result) {
     callback(null, result);

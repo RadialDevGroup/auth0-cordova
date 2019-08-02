@@ -86,7 +86,13 @@ CordovaAuth.prototype.logout = function (callback) {
       return true;
     });
 
-    agent.open(url, function (error, result) {
+    var options = {
+      url: url,
+      hidden: true,
+      animated: false
+    };
+
+    agent.open(options, function (error, result) {
       if (error != null) {
         session.clean();
         return callback(error);

@@ -11,6 +11,11 @@ function WebView() {
 }
 
 WebView.prototype.open = function (url, handler) {
+  if (url instanceof Object) {
+    url = url.url;
+    if (!url) throw new Error("url is a required option");
+  }
+
   var browser = window.cordova.InAppBrowser;
   var tab = browser.open(url, '_blank');
 
