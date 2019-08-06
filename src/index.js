@@ -120,7 +120,7 @@ CordovaAuth.prototype.logout = function (callback) {
         return;
       }
     });
-  });
+  }, { useNativeBrowser: true });
 }
 
 /**

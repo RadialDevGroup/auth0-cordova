@@ -11,13 +11,15 @@ function WebView() {
 }
 
 WebView.prototype.open = function (url, handler) {
+  var options = "location=yes";
   if (url instanceof Object) {
+    options = url.hidden ? options + ",hidden=yes" : options;
     url = url.url;
     if (!url) throw new Error("url is a required option");
   }
 
   var browser = window.cordova.InAppBrowser;
-  var tab = browser.open(url, '_blank');
+  var tab = browser.open(url, '_system', options);
 
   tab.addEventListener('loadstop', this.handleFirstLoadEnd);
   tab.addEventListener('loaderror', this.handleLoadError);
