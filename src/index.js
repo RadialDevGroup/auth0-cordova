@@ -165,6 +165,20 @@ CordovaAuth.prototype.authorize = function (parameters, callback) {
 
     parameters.state = requestState;
 
+    if (parameters.refreshToken) {
+      client.oauthToken({
+        grantType: 'refresh_token',
+        refresh_token: parameters.refreshToken
+      }, function (exchangeError, exchangeResult) {
+        if (exchangeError) {
+          return callback(exchangeError);
+        }
+        return callback(null, exchangeResult);
+      });
+      return true;
+    }
+    delete parameters.refreshToken;
+
     var params = Object.assign({}, parameters, {
       code_challenge_method: 'S256',
       responseType: 'code',
