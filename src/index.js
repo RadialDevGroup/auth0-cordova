@@ -107,12 +107,7 @@ CordovaAuth.prototype.logout = function (callback) {
         };
 
         session.closing();
-        if (getOS() === 'ios') {
-          handleClose();
-        } else {
-          setTimeout(handleClose, closingDelayMs);
-          return;
-        }
+        setTimeout(handleClose, closingDelayMs);
       }
 
       if (result.event !== 'loaded') {
@@ -250,12 +245,8 @@ CordovaAuth.prototype.authorize = function (parameters, callback) {
         };
 
         session.closing();
-        if (getOS() === 'ios') {
-          handleClose();
-        } else {
-          setTimeout(handleClose, closingDelayMs);
-          return;
-        }
+        setTimeout(handleClose, closingDelayMs);
+        return;
       }
 
       if (result.event !== 'loaded') {

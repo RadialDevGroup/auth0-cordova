@@ -26,7 +26,9 @@ Browser.prototype.open = function (url, callback) {
   }
 
   var options = Object.assign({}, userOptions, {
-    url: url
+    url: url,
+    barColor: "#33333a",
+    controlTintColor: "#88888f"
   });
 
   this.browser.show(options, function (result) {
